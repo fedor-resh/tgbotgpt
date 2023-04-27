@@ -6,6 +6,11 @@ import { ogg } from './ogg.js'
 import { openai } from './openai.js'
 import { removeFile } from './utils.js'
 import { initCommand, processTextToChat, INITIAL_SESSION } from './logic.js'
+import express from 'express'
+const app = express()
+app.get('/', (req, res)=>{
+  res.send('hello world')
+})
 
 const bot = new Telegraf(config.get('TELEGRAM_TOKEN'))
 
