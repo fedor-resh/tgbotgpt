@@ -12,6 +12,10 @@ app.get('/', (req, res)=>{
   res.send('hello world')
 })
 
+app.listen(3000, ()=>{
+  console.log('work on 3000')
+})
+
 const bot = new Telegraf(config.get('TELEGRAM_TOKEN'))
 
 bot.use(session())
