@@ -24,18 +24,6 @@ bot.command('new', initCommand)
 
 bot.command('start', initCommand)
 
-bot.command('image', async (ctx)=>{
-  const msg_with_image = ctx.message.text
-  const msg = msg_with_image
-      .split(' ')
-      .slice(1)
-      .join(' ')
-  const images = await openai.createImage(msg)
-  images.forEach(({url})=>{
-    ctx.replyWithPhoto({ url })
-  })
-})
-
 bot.on(message('voice'), async (ctx) => {
   ctx.session = ctx.session||INITIAL_SESSION
   try {
