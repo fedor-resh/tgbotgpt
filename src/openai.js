@@ -39,6 +39,19 @@ class OpenAI {
       console.log('Error while transcription', e.message)
     }
   }
+  
+  async createImage(description){
+    try{
+      const response = await this.openai.createImage({
+        prompt: description,
+        n: 2,
+        size: "1024x1024",
+      });
+      return response.data.data
+    }catch (e) {
+      console.log('Error while create image', e.message)
+    }
+  }
 }
 
 export const openai = new OpenAI(config.get('OPENAI_KEY'))
