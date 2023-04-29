@@ -6,6 +6,7 @@ export const INITIAL_SESSION = () => ({
 
 export async function initCommand(ctx) {
   const userId = ctx.from.id
+  ctx.session ??= {}
   ctx.session[userId] = INITIAL_SESSION()
   await ctx.reply('Жду вашего голосового или текстового сообщения')
 }
