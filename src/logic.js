@@ -1,11 +1,12 @@
 import { openai } from './openai.js'
 
-export const INITIAL_SESSION = {
+export const INITIAL_SESSION = () => ({
   messages: [],
-}
+})
 
 export async function initCommand(ctx) {
-  ctx.session = INITIAL_SESSION
+  const userId = ctx.from.id
+  ctx.session[userId] = INITIAL_SESSION()
   await ctx.reply('Жду вашего голосового или текстового сообщения')
 }
 

@@ -28,7 +28,7 @@ bot.on(message('voice'), async (ctx) => {
   ctx.session??={}
   const userId = ctx.from.id
   if(!ctx.session[userId]){
-    ctx.session[userId] = INITIAL_SESSION
+    ctx.session[userId] = INITIAL_SESSION()
   }
 
   try {
@@ -53,7 +53,7 @@ bot.on(message('text'), async (ctx) => {
   ctx.session??={}
   const userId = ctx.from.id
   if(!ctx.session[userId]){
-    ctx.session[userId] = INITIAL_SESSION
+    ctx.session[userId] = INITIAL_SESSION()
   }
   try {
     await ctx.reply(code('Сообщение принял. Жду ответ от сервера...'))
