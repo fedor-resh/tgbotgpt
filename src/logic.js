@@ -11,11 +11,12 @@ export async function initCommand(ctx) {
 
 export async function processTextToChat(ctx, content) {
   try {
-    ctx.session.messages.push({ role: openai.roles.USER, content })
+    const userId = ctx.from.id
+    ctx.session[userId].messages.push({ role: openai.roles.USER, content })
 
-    const response = await openai.chat(ctx.session.messages)
+    const response = await openai.chat(ctx.session[userId].messages)
 
-    ctx.session.messages.push({
+    ctx.session[userId].messages.push({
       role: openai.roles.ASSISTANT,
       content: response.content,
     })
