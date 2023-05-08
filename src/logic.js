@@ -1,16 +1,35 @@
-import { openai } from './openai.js'
+import { openai } from "./main.js";
 
-export const INITIAL_SESSION = () => ({
-  messages: [],
-})
+export class User {
+  messages = []
+  trial_count = 1
+  additional_count = 0
+}
 
 export async function initCommand(ctx) {
   const userId = ctx.from.id
   ctx.session ??= {}
-  ctx.session[userId] = INITIAL_SESSION()
+  ctx.session[userId] = new User()
+  setInterval(() => {
+    ctx.session[userId].trial_count = 10
+  }, 1000 * 60 * 60 * 24)
   await ctx.reply('Жду вашего голосового или текстового сообщения')
 }
-
+export async function handleTrialRequest(ctx) {
+    const userId = ctx.from.id
+    const {trial_count, additional_count} = ctx.session[userId]
+    if (trial_count + additional_count > 0) {
+        ctx.session[userId][trial_count > 0?'trial_count':'additional_count'] -= 1
+        await ctx.reply(`Осталось ${trial_count + additional_count - 1} запросов`)
+        return true
+    } else {
+        await ctx.reply(
+            `Вы исчерпали лимит бесплатных запросов
+            /request_more — запросить дополнительные запросы`
+        )
+        return false
+    }
+}
 export async function processTextToChat(ctx, content) {
   try {
     const userId = ctx.from.id
