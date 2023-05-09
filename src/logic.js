@@ -1,5 +1,5 @@
 import { openai } from "./main.js";
-
+import {state} from './main.js'
 export class User {
   messages = []
   trial_count = 10
@@ -8,9 +8,9 @@ export class User {
 
 export async function initCommand(ctx) {
   const userId = ctx.from.id
-  ctx.session = ctx.session || {}
+  ctx.session = ctx.session || state
   ctx.session[userId] = new User()
-  setInterval(() => {
+  ctx.session.trialInterval = setInterval(() => {
     ctx.session[userId].trial_count = 10
   }, 1000 * 60 * 60 * 24)
   await ctx.reply('Жду вашего голосового или текстового сообщения')

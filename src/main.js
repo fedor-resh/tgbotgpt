@@ -6,6 +6,7 @@ import {ogg} from './ogg.js'
 import {OpenAI} from './openai.js'
 import {removeFile} from './utils.js'
 import {handleTrialRequest, initCommand, processTextToChat} from './logic.js'
+
 import express from 'express'
 dotenv()
 const app = express()
@@ -16,7 +17,7 @@ app.get('/', (req, res) => {
 app.listen(3000, () => {
     console.log('work on 3000')
 })
-
+export const state = {}
 export const openai = new OpenAI(process.env.OPENAI_KEY)
 const bot = new Telegraf(process.env.TELEGRAM_TOKEN)
 const admin_username = 'fedukus'
@@ -41,8 +42,6 @@ bot.command('count', async (ctx) => {
 })
 
 bot.command('request_more', async (ctx) => {
-    const userId = ctx.from.id
-    const {trial_count, additional_count} = ctx.session[userId]
     await ctx.telegram.sendMessage(admin_userId, `Пользователь ${ctx.from.username} запросил дополнительные запросы`)
     await ctx.telegram.sendMessage(admin_userId, `/add ${ctx.from.id} 10`)
     await ctx.reply(`Запрос отправлен администратору`)
