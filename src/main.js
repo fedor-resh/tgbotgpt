@@ -43,22 +43,24 @@ bot.command('count', async (ctx) => {
 bot.command('request_more', async (ctx) => {
     const userId = ctx.from.id
     const {trial_count, additional_count} = ctx.session[userId]
-    if (trial_count + additional_count > 0) {
-        await ctx.reply(`У вас еще есть запросы`)
-    } else {
-        await ctx.telegram.sendMessage(admin_userId, `Пользователь ${ctx.from.username} запросил дополнительные запросы`)
-        await ctx.telegram.sendMessage(admin_userId, `/add ${ctx.from.id} 10`)
-        await ctx.reply(`Запрос отправлен администратору`)
-
-    }
+    await ctx.telegram.sendMessage(admin_userId, `Пользователь ${ctx.from.username} запросил дополнительные запросы`)
+    await ctx.telegram.sendMessage(admin_userId, `/add ${ctx.from.id} 10`)
+    await ctx.reply(`Запрос отправлен администратору`)
 })
 bot.command('add', async (ctx) => {
+  try {
     if (ctx.from.username !== admin_username) return
-    const userId = ctx.message.text.split(' ')[1]
-    const count = ctx.message.text.split(' ')[2]
-    ctx.session[userId].additional_count += Number(count)
+    console.log(ctx.message.text)
+    console.log(ctx.session)
+    const userId = Number(ctx.message.text.split(' ')[1])
+    const count = Number(ctx.message.text.split(' ')[2])
+    ctx.session[userId].additional_count += count
     await ctx.reply(`Запросы добавлены`)
     await ctx.telegram.sendMessage(userId, `Вам добавили ${count} запросов`)
+  } catch (error) {
+    console.log('error')
+  }
+
 })
 bot.on(message('voice'), async (ctx) => {
     const userId = ctx.from.id
@@ -86,11 +88,16 @@ bot.on(message('voice'), async (ctx) => {
 })
 
 bot.on(message('text'), async (ctx) => {
+  
     const userId = ctx.from.id
     if (!ctx.session?.[userId]) {
         await initCommand(ctx)
     }
-    if(!await handleTrialRequest(ctx))return
+  ctx.session.num ??= 1
+  ctx.session.num += 1
+  console.log(ctx.session)
+    console.log(ctx.from.username, ctx.from.id)
+    if(!await handleTrialRequest(ctx)) return
 
     try {
         await ctx.reply(code('Сообщение принял. Жду ответ от сервера...'))

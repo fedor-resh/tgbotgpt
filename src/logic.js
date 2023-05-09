@@ -2,13 +2,13 @@ import { openai } from "./main.js";
 
 export class User {
   messages = []
-  trial_count = 1
+  trial_count = 10
   additional_count = 0
 }
 
 export async function initCommand(ctx) {
   const userId = ctx.from.id
-  ctx.session ??= {}
+  ctx.session = ctx.session || {}
   ctx.session[userId] = new User()
   setInterval(() => {
     ctx.session[userId].trial_count = 10
