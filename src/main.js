@@ -49,8 +49,6 @@ bot.command('request_more', async (ctx) => {
 bot.command('add', async (ctx) => {
   try {
     if (ctx.from.username !== admin_username) return
-    console.log(ctx.message.text)
-    console.log(ctx.session)
     const userId = Number(ctx.message.text.split(' ')[1])
     const count = Number(ctx.message.text.split(' ')[2])
     ctx.session[userId].additional_count += count
@@ -92,9 +90,6 @@ bot.on(message('text'), async (ctx) => {
     if (!ctx.session?.[userId]) {
         await initCommand(ctx)
     }
-  ctx.session.num ??= 1
-  ctx.session.num += 1
-  console.log(ctx.session)
     console.log(ctx.from.username, ctx.from.id)
     if(!await handleTrialRequest(ctx)) return
 
