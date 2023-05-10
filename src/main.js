@@ -76,7 +76,7 @@ bot.hears(new RegExp('add.*'), async (ctx) => {
 })
 bot.on(message('voice'), async (ctx) => {
     if (!await handleTrialRequest(ctx)) return
-
+    await waiter.start(ctx)
     try {
 
         const link = await ctx.telegram.getFileLink(ctx.message.voice.file_id)
@@ -93,6 +93,7 @@ bot.on(message('voice'), async (ctx) => {
     } catch (e) {
         console.log(e)
     }
+    await waiter.stop()
 })
 
 bot.on(message('text'), async (ctx) => {
