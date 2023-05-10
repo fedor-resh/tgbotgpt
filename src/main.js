@@ -9,6 +9,7 @@ import {handleTrialRequest, initUser, processTextToChat} from './logic.js'
 
 import express from 'express'
 import {Mongodb} from "./mongodb.js";
+import {Waiter} from "./waiter.js";
 
 dotenv()
 const app = express()
@@ -21,28 +22,29 @@ app.listen(3000, () => {
 })
 export const openai = new OpenAI(process.env.OPENAI_KEY)
 export const admin_username = 'fedukus'
-export const state = {}
+export const users = {}
 const admin_userId = '1067565088'
 export const db = new Mongodb(process.env.MONGODB_URI)
 const bot = new Telegraf(process.env.TELEGRAM_TOKEN)
+const waiter = new Waiter()
 db.connect()
 bot.use(session())
 bot.use(async (ctx, next) => {
     const userId = ctx.from.id
-    if (!state?.[userId]) {
+    if (!users?.[userId]) {
         await initUser(ctx)
     }
     next()
 })
 bot.command('new', ctx => {
     ctx.session = {messages: []}
-    ctx.reply('Память чата стёрта')
+    ctx.reply(code('Память чата стёрта'))
 })
 
 bot.command('start', async (ctx) => {
     await initUser(ctx)
-    await ctx.telegram.sendMessage(admin_userId, 'Бот запущен')
     ctx.replyWithMarkdown(
+        'Привет! Я GPT-3 у тебя есть 10 ежедневных запросов\n' +
         '/new — стереть память чату\n' +
         '/count — узнать количество оставшихся запросов'
     )
@@ -50,7 +52,7 @@ bot.command('start', async (ctx) => {
 
 bot.command('count', async (ctx) => {
     const userId = ctx.from.id
-    const {trial_count, additional_count} = state[userId]
+    const {trial_count, additional_count} = users[userId]
     await ctx.reply(`Осталось ${trial_count} ежедневных запросов и ${additional_count} дополнительных`)
 })
 
@@ -64,8 +66,8 @@ bot.hears(new RegExp('add.*'), async (ctx) => {
         if (ctx.from.username !== admin_username) return
         const userId = Number(ctx.message.text.split('_')[1])
         const count = Number(ctx.message.text.split('_')[2])
-        state[userId].additional_count += count
-        db.updateUser(userId, state[userId])
+        users[userId].additional_count += count
+        db.updateUser(userId, users[userId])
         await ctx.reply(`Запросы добавлены`)
         await ctx.telegram.sendMessage(userId, `Вам добавили ${count} запросов`)
     } catch (error) {
@@ -76,7 +78,7 @@ bot.on(message('voice'), async (ctx) => {
     if (!await handleTrialRequest(ctx)) return
 
     try {
-        await ctx.reply(code('Сообщение принял. Жду ответ от сервера...'))
+
         const link = await ctx.telegram.getFileLink(ctx.message.voice.file_id)
         const userId = String(ctx.message.from.id)
         const oggPath = await ogg.create(link.href, userId)
@@ -89,20 +91,22 @@ bot.on(message('voice'), async (ctx) => {
 
         await processTextToChat(ctx, text)
     } catch (e) {
-        console.log(`Error while voice message`, e.message)
+        console.log(e)
     }
 })
 
 bot.on(message('text'), async (ctx) => {
     if (!await handleTrialRequest(ctx)) return
-
+    await waiter.start(ctx)
     try {
-        await ctx.reply(code('Сообщение принял. Жду ответ от сервера...'))
         await processTextToChat(ctx, ctx.message.text)
     } catch (e) {
-        console.log(`Error while voice message`, e.message)
+        console.log('text message', e)
     }
+    await waiter.stop(ctx)
 })
+
+
 
 bot.launch()
 

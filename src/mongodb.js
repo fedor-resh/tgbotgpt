@@ -51,7 +51,7 @@ export class Mongodb {
             delete data._id
             return await this.users.updateOne({userId}, {$set: data})
         } catch (e) {
-            console.error(e)
+            console.error('error while update user in db', e)
         }
     }
 }
