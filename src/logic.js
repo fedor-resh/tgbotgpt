@@ -10,22 +10,34 @@ export class User {
 }
 
 export async function initUser(ctx) {
+  try{
     const userId = ctx.from.id
     ctx.session ??= {messages:[]}
     if (Object.keys(state).length === 0) {
         const users = await db.db.collection('users').find({}).toArray()
         users.forEach(user => {
             state[user.userId] = user
+            state[user.userId].trial_count = 10
+            db.updateUser(state[user.userId])
+            setInterval(() => {
+                state[user.userId].trial_count = 10
+                db.updateUser(state[user.userId])
+            }, 1000 * 60 * 60 * 24)
         })
     }
     if (!state[userId]) {
         state[userId] = new User()
+        db.updateUser(state[userId])
         setInterval(() => {
             state[userId].trial_count = 10
             db.updateUser(state[userId])
         }, 1000 * 60 * 60 * 24)
     }
     await ctx.reply('Жду вашего голосового или текстового сообщения')
+  }catch(e){
+    console.log(e)
+  }
+
 }
 
 
