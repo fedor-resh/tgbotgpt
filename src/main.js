@@ -26,7 +26,6 @@ export const users = {}
 const admin_userId = '1067565088'
 export const db = new Mongodb(process.env.MONGODB_URI)
 const bot = new Telegraf(process.env.TELEGRAM_TOKEN)
-const waiter = new Waiter()
 db.connect()
 bot.use(session())
 bot.use(async (ctx, next) => {
@@ -71,11 +70,12 @@ bot.hears(new RegExp('add.*'), async (ctx) => {
         await ctx.reply(`Запросы добавлены`)
         await ctx.telegram.sendMessage(userId, `Вам добавили ${count} запросов`)
     } catch (error) {
-        console.log('error')
+        console.log('error', error)
     }
 })
 bot.on(message('voice'), async (ctx) => {
     if (!await handleTrialRequest(ctx)) return
+    const waiter = new Waiter()
     await waiter.start(ctx)
     try {
 
@@ -98,6 +98,7 @@ bot.on(message('voice'), async (ctx) => {
 
 bot.on(message('text'), async (ctx) => {
     if (!await handleTrialRequest(ctx)) return
+    const waiter = new Waiter()
     await waiter.start(ctx)
     try {
         await processTextToChat(ctx, ctx.message.text)

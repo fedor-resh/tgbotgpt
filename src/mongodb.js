@@ -48,6 +48,7 @@ export class Mongodb {
 
     async updateUser(userId, data) {
         try {
+            if(!data) return
             delete data._id
             return await this.users.updateOne({userId}, {$set: data})
         } catch (e) {
