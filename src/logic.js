@@ -2,7 +2,7 @@ import {openai} from "./main.js";
 import {users} from './main.js'
 import {db} from "./main.js";
 import {isMoreDifference, setMidnightInterval, timeBeforeMidnight} from "./utils.js";
-import {code} from "telegraf/format";
+import {code, } from "telegraf/format";
 
 export class User {
     messages = []
@@ -23,6 +23,7 @@ async function initUsers(){
     })
 }
 export async function initUser(ctx) {
+    if(ctx.session) return
     try {
         const userId = ctx.from.id
         ctx.session ??= {messages: []}
@@ -55,6 +56,31 @@ export async function handleTrialRequest(ctx) {
 }
 
 
+// export async function processTextToChat(ctx, content) {
+//     try {
+//
+//         if (isMoreDifference(30, ctx.session.lastMessageTime||Date.now(), Date.now())) {
+//             ctx.session.messages = []
+//             ctx.reply(code('context cleared'))
+//         }
+//         ctx.session.lastMessageTime = Date.now()
+//         ctx.session.messages.push({role: openai.roles.USER, content})
+//         const response = await openai.chat(ctx.session.messages)
+//
+//         ctx.session.messages.push({
+//             role: openai.roles.ASSISTANT,
+//             content: response.content,
+//         })
+//
+//
+//         await ctx.replyWithMarkdown(response.content)
+//     } catch (e) {
+//         console.log('Error while processing text to gpt', e.message)
+//         await ctx.reply(code(`Ошибка: GPT задумался и не ответил. Попробуйте почистить контекст командой /new`))
+//     }
+// }
+
+
 export async function processTextToChat(ctx, content) {
     try {
 
@@ -64,19 +90,24 @@ export async function processTextToChat(ctx, content) {
         }
         ctx.session.lastMessageTime = Date.now()
         ctx.session.messages.push({role: openai.roles.USER, content})
-        const response = await openai.chat(ctx.session.messages)
 
-        ctx.session.messages.push({
-            role: openai.roles.ASSISTANT,
-            content: response.content,
+        const curMessage = await ctx.replyWithMarkdown('...')
+        await openai.updateWhileChatStream(ctx.session.messages, (message, parse=false) => {
+            try{
+                ctx.telegram.editMessageText(
+                    curMessage.chat.id,
+                    curMessage.message_id,
+                    null,
+                    message,
+                    {parse_mode: parse ? 'Markdown' : undefined}
+                )
+            }catch (e) {
+                console.log(e)
+            }
         })
 
-
-        await ctx.replyWithMarkdown(response.content)
     } catch (e) {
         console.log('Error while processing text to gpt', e.message)
         await ctx.reply(code(`Ошибка: GPT задумался и не ответил. Попробуйте почистить контекст командой /new`))
     }
 }
-
-

@@ -17,7 +17,8 @@ function getAntispam(delay) {
     return true
   }
 }
-export const antispam = getAntispam(10000)
+export const antispam = getAntispam(5000)
+export const streamDebounce = getAntispam(500)
 export function setMidnightInterval(func){
   const now = new Date()
   const ms_now = +now

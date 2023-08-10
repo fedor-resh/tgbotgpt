@@ -4,7 +4,7 @@ import {message} from 'telegraf/filters'
 import {code} from 'telegraf/format'
 import {ogg} from './ogg.js'
 import {OpenAI} from './openai.js'
-import {removeFile} from './utils.js'
+import {antispam, removeFile} from './utils.js'
 import {handleTrialRequest, initUser, processTextToChat} from './logic.js'
 
 import express from 'express'
@@ -98,15 +98,13 @@ bot.on(message('voice'), async (ctx) => {
 
 bot.on(message('text'), async (ctx) => {
     if (!await handleTrialRequest(ctx)) return
-    await waiter.start(ctx)
+    if (!antispam()) return await ctx.reply('Слишком много запросов, попробуйте позже')
     try {
         await processTextToChat(ctx, ctx.message.text)
     } catch (e) {
         console.log('text message', e)
     }
-    await waiter.stop(ctx)
 })
-
 
 
 bot.launch()
