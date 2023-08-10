@@ -49,6 +49,7 @@ export class Mongodb {
     async updateUser(userId, data) {
         if(!data) return console.error('data is empty')
         try {
+            if(!data) return
             delete data._id
             return await this.users.updateOne({userId}, {$set: data})
         } catch (e) {
