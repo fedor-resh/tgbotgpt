@@ -16,21 +16,19 @@ const app = express()
 app.get('/', (req, res) => {
     res.send('hello world')
 })
-
 app.listen(3000, () => {
     console.log('work on 3000')
 })
-export const openai = new OpenAI(process.env.OPENAI_KEY)
-export const admin_username = 'fedukus'
+export let creator = {}
 export const users = {}
-const admin_userId = '1067565088'
+export const openai = new OpenAI(process.env.OPENAI_KEY)
 export const db = new Mongodb(process.env.MONGODB_URI)
 const bot = new Telegraf(process.env.TELEGRAM_TOKEN)
 db.connect()
 bot.use(session())
 bot.use(async (ctx, next) => {
     const userId = ctx.from.id
-    if (!users?.[userId]) {
+    if (!users[userId] && !ctx.session) {
         await initUser(ctx)
     }
     next()
@@ -39,9 +37,13 @@ bot.command('new', ctx => {
     ctx.session = {messages: []}
     ctx.reply(code('Память чата стёрта'))
 })
-
 bot.command('start', async (ctx) => {
     await initUser(ctx)
+    creator = await ctx.getChat()
+    creator = {
+        id: creator.id,
+        username: creator.username,
+    }
     ctx.replyWithMarkdown(
         'Привет! Я GPT-3 у тебя есть 10 ежедневных запросов\n' +
         '/new — стереть память чату\n' +
@@ -56,13 +58,16 @@ bot.command('count', async (ctx) => {
 })
 
 bot.command('request_more', async (ctx) => {
-    await ctx.telegram.sendMessage(admin_userId, `Пользователь ${ctx.from.username} запросил дополнительные запросы`)
-    await ctx.telegram.sendMessage(admin_userId, `/add_${ctx.from.id}_10`)
-    await ctx.reply(`Запрос отправлен администратору`)
+    try{
+        await ctx.telegram.sendMessage(creator.id, `Пользователь ${ctx.from.username} запросил дополнительные запросы`)
+        await ctx.telegram.sendMessage(creator.id, `/add_${ctx.from.id}_10`)
+        await ctx.reply(`Запрос отправлен администратору`)
+    }catch (e) { console.log(e)}
+
 })
 bot.hears(new RegExp('add.*'), async (ctx) => {
     try {
-        if (ctx.from.username !== admin_username) return
+        if (ctx.from.username !== creator.username) return
         const userId = Number(ctx.message.text.split('_')[1])
         const count = Number(ctx.message.text.split('_')[2])
         users[userId].additional_count += count
@@ -78,7 +83,6 @@ bot.on(message('voice'), async (ctx) => {
     const waiter = new Waiter()
     await waiter.start(ctx)
     try {
-
         const link = await ctx.telegram.getFileLink(ctx.message.voice.file_id)
         const userId = String(ctx.message.from.id)
         const oggPath = await ogg.create(link.href, userId)

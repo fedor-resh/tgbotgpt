@@ -41,7 +41,22 @@ export class OpenAI {
         }
     }
 
-    async updateWhileChatStream(messages, callback) {
+    async updateWhileChatStream(ctx) {
+        const curMessage = await ctx.replyWithMarkdown('...')
+        const messages = ctx.session.messages
+        const editMessageText = (message, parse=false) => {
+            try{
+                ctx.telegram.editMessageText(
+                    curMessage.chat.id,
+                    curMessage.message_id,
+                    null,
+                    message,
+                    {parse_mode: parse ? 'Markdown' : undefined}
+                )
+            }catch (e) {
+                console.log('catched', e)
+            }
+        }
         try {
             const res = await this.chatStream(messages)
             let text = ''
@@ -50,7 +65,7 @@ export class OpenAI {
                 for (const line of lines) {
                     const message = line.replace(/^data: /, '');
                     if (message === '[DONE]') {
-                        callback(text, true)
+                        editMessageText(text, true)
                         messages.push({
                             role: openai.roles.ASSISTANT,
                             content: text,
@@ -62,7 +77,7 @@ export class OpenAI {
                         const add = parsed.choices[0].delta.content
                         if(add) {
                             text += add
-                            if(streamDebounce()) callback(text+'...')
+                            if(streamDebounce()) editMessageText(text+' ...')
                         }
                     } catch (error) {
                         console.error('Could not JSON parse stream message', message, error);
