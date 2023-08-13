@@ -65,7 +65,11 @@ export class OpenAI {
                 for (const line of lines) {
                     const message = line.replace(/^data: /, '');
                     if (message === '[DONE]') {
+                      try {
                         editMessageText(text, true)
+                      } catch (error) {
+                        editMessageText(text)
+                      }
                         messages.push({
                             role: openai.roles.ASSISTANT,
                             content: text,
